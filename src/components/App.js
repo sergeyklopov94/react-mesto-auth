@@ -1,4 +1,6 @@
 import React from 'react';
+import { Routes, Route } from 'react-router-dom';
+import { CurrentUserContext, currentData } from '../contexts/CurrentUserContext';
 import Header from './Header';
 import Main from './Main';
 import Footer from './Footer';
@@ -7,19 +9,26 @@ import EditProfilePopup from './EditProfilePopup';
 import EditAvatarPopup from './EditAvatarPopup';
 import AddPlacePopup from './AddPlacePopup';
 import api from '../utils/api';
-import {CurrentUserContext, currentData} from '../contexts/CurrentUserContext';
+import Login from './Login.js';
+import Register from './Register.js';
+import InfoTooltip from './InfoTooltip';
+import ProtectedRoute from './ProtectedRoute';
 
-function App() {
+
+function App({email}) {
 
   const [isEditProfilePopupOpen, setIsEditProfilePopupOpen] = React.useState(false);
   const [isAddPlacePopupOpen, setIsAddPlacePopupOpen] = React.useState(false);
   const [isEditAvatarPopupOpen, setIsEditAvatarPopupOpen] = React.useState(false);
+  const [isInfoTooltipOpen, setIsInfoTooltipOpen] = React.useState(false);
 
   const [selectedCard, setSelectedCard] = React.useState({});
 
   const [cards, setCards] = React.useState([]);
 
   const [currentUser, setCurrentUser] = React.useState(currentData);
+
+  const [loggedIn, setLoggedIn] = React.useState(false);
   
   const closeAllPopups = () => {
     setIsEditProfilePopupOpen(false);
@@ -122,17 +131,30 @@ function App() {
   return (
     <CurrentUserContext.Provider value={currentUser}>
       <div className="root" id="root">
-        <Header />
-        <Main
-          cards={cards}
-          onEditProfile ={handleEditProfileClick}
-          onAddPlace={handleAddPlaceClick}
-          onEditAvatar={handleEditAvatarClick}
-          onCardClick={handleCardClick}
-          onCardDelete={handleCardDelete}
-          onCardLike={handleCardLike}
-        />
-        <Footer />
+        <Header>
+          <p className="navigation__text navigation__text_email">{email}</p>
+          <p className="navigation__text">Выйти</p> {/* //onClick={onLogout} */}
+        </Header>
+        <Routes>
+          <Route path="/sign-up" element={
+            <Register />} />
+          <Route path="/sign-in" element={
+            <Login />} />
+          <Route path="/" element={
+            <ProtectedRoute
+              element={Main}
+              loggedIn={loggedIn}
+              cards={cards}
+              onEditProfile ={handleEditProfileClick}
+              onAddPlace={handleAddPlaceClick}
+              onEditAvatar={handleEditAvatarClick}
+              onCardClick={handleCardClick}
+              onCardDelete={handleCardDelete}
+              onCardLike={handleCardLike}
+            />
+          }/>
+        </Routes>
+        {loggedIn && <Footer />}
         <EditProfilePopup
           isOpen={isEditProfilePopupOpen} 
           onClose={closeAllPopups}
@@ -153,6 +175,10 @@ function App() {
           onClose={closeAllPopups}
         >
         </ImagePopup>
+        <InfoTooltip
+          isOpen={isInfoTooltipOpen}
+          onClose={closeAllPopups}
+        />
       </div>
     </CurrentUserContext.Provider>
   );
