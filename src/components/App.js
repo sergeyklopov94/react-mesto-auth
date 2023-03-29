@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 import { CurrentUserContext, currentData } from '../contexts/CurrentUserContext';
 import Header from './Header';
 import Main from './Main';
@@ -13,14 +13,19 @@ import Login from './Login.js';
 import Register from './Register.js';
 import InfoTooltip from './InfoTooltip';
 import ProtectedRoute from './ProtectedRoute';
+import * as auth from '../utils/auth.js';
+import errorIcon from '../images/no-success-icon.svg';
+import successIcon from '../images/success-icon.svg';
 
 
-function App({email}) {
+function App() {
 
   const [isEditProfilePopupOpen, setIsEditProfilePopupOpen] = React.useState(false);
   const [isAddPlacePopupOpen, setIsAddPlacePopupOpen] = React.useState(false);
   const [isEditAvatarPopupOpen, setIsEditAvatarPopupOpen] = React.useState(false);
   const [isInfoTooltipOpen, setIsInfoTooltipOpen] = React.useState(false);
+
+  const [infoTooltipData, setInfoTooltipData] = React.useState({image: null, text: ''});
 
   const [selectedCard, setSelectedCard] = React.useState({});
 
@@ -29,12 +34,62 @@ function App({email}) {
   const [currentUser, setCurrentUser] = React.useState(currentData);
 
   const [loggedIn, setLoggedIn] = React.useState(false);
+
+  const [email, setEmail] = React.useState('');
+
+  const navigate = useNavigate();
   
   const closeAllPopups = () => {
     setIsEditProfilePopupOpen(false);
     setIsAddPlacePopupOpen(false);
     setIsEditAvatarPopupOpen(false);
+    setIsInfoTooltipOpen(false);
     setSelectedCard({});
+  }
+
+  const handleLogin = (email, password, setFormValue) => {
+    let infoTooltipText = '';
+    let infoTooltipImage = null;
+    auth.authorize(email, password)
+      .then((res) => {
+        if (res.token) {
+          setFormValue({email: '', password: ''});
+          setLoggedIn(true);
+          navigate('/', {replace: true});
+          infoTooltipText = 'Вы успешно вошли!';
+          infoTooltipImage = successIcon;
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+        infoTooltipText = 'Что-то пошло не так! Попробуйте еще раз.';
+        infoTooltipImage = errorIcon;
+      })
+      .finally(() => {
+        setInfoTooltipData({image: infoTooltipImage, text: infoTooltipText});
+        setIsInfoTooltipOpen(true);
+      });
+  }
+
+  const handleRegister = (formValue) => {
+    let infoTooltipText = '';
+    let infoTooltipImage = null;
+    const { password, email } = formValue;
+    auth.register(password, email)
+      .then((res) => {
+        navigate('/sign-in', {replace: true});
+        infoTooltipText = 'Вы успешно зарегистрировались!';
+        infoTooltipImage = successIcon;
+      })
+      .catch((err) => {
+        console.log(err);
+        infoTooltipText = 'Что-то пошло не так! Попробуйте еще раз.';
+        infoTooltipImage = errorIcon;
+      })
+      .finally(() => {
+        setInfoTooltipData({image: infoTooltipImage, text: infoTooltipText});
+        setIsInfoTooltipOpen(true);
+      });
   }
 
   function handleEditProfileClick() {
@@ -118,28 +173,42 @@ function App({email}) {
   }
 
   React.useEffect(() => {
-    Promise.all([api.getUserData(), api.getInitialCards()])
-      .then(([userData, cardData]) => {
-        setCurrentUser(userData);
-        setCards(cardData);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+    const token = localStorage.getItem('token');
+    if (token) {
+      auth.checkToken(token)
+        .then((res) => {
+          if (res) {
+            setEmail(res.data.email);
+            setLoggedIn(true);
+            navigate('/', { replace: true });
+          }
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    }
+  }, [navigate]);
+
+  React.useEffect(() => {
+      Promise.all([api.getUserData(), api.getInitialCards()])
+        .then(([userData, cardData]) => {
+          setCurrentUser(userData);
+          setCards(cardData);
+        })
+        .catch((err) => {
+          console.log(err);
+        });
   }, []);
 
   return (
     <CurrentUserContext.Provider value={currentUser}>
       <div className="root" id="root">
-        <Header>
-          <p className="navigation__text navigation__text_email">{email}</p>
-          <p className="navigation__text">Выйти</p> {/* //onClick={onLogout} */}
-        </Header>
+        <Header email={email} />
         <Routes>
           <Route path="/sign-up" element={
-            <Register />} />
+            <Register handleRegister={handleRegister} />} />
           <Route path="/sign-in" element={
-            <Login />} />
+            <Login handleLogin={handleLogin} />} />
           <Route path="/" element={
             <ProtectedRoute
               element={Main}
@@ -153,6 +222,7 @@ function App({email}) {
               onCardLike={handleCardLike}
             />
           }/>
+          <Route path="*" element={<Login />} />
         </Routes>
         {loggedIn && <Footer />}
         <EditProfilePopup
@@ -176,8 +246,10 @@ function App({email}) {
         >
         </ImagePopup>
         <InfoTooltip
-          isOpen={isInfoTooltipOpen}
           onClose={closeAllPopups}
+          isOpen={isInfoTooltipOpen}
+          image={infoTooltipData.image}
+          text={infoTooltipData.text}
         />
       </div>
     </CurrentUserContext.Provider>

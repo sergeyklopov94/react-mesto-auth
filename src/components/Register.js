@@ -1,14 +1,27 @@
 import React from 'react';
-import {Link} from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
-function Register() {
+const Register = ({handleRegister}) => {
+
+  const [formValue, setFormValue] = React.useState({email: '', password: ''})
+  
+  const handleChange = (evt) => {
+    const {name, value} = evt.target;
+    setFormValue({...formValue, [name]: value});
+  }
+
+  const handleSubmit = (evt) => {
+    evt.preventDefault();
+    handleRegister(formValue);
+  }
+    
   return (
       <main className="sign">
         <div className="sign__container">
           <h3 className="sign__header">Регистрация</h3>
           <form className="sign__form"
-            name="sign-up-form">
-            {/* onSubmit={handleSubmit} */}
+            name="sign-up-form"
+            onSubmit={handleSubmit}>
             <fieldset className="sign__input-container">
               <input className="sign__input"
                 name="email"
@@ -18,7 +31,9 @@ function Register() {
                 maxLength="40"
                 placeholder="Email"
                 required
-                // onChange={handleEmailChange}
+                onChange={handleChange}
+                value={formValue.email}
+                autoComplete="current-username"
               >
               </input>
               <input className="sign__input"
@@ -29,7 +44,9 @@ function Register() {
                 maxLength="20"
                 placeholder="Password"
                 required
-                // onChange={handlePasswordChange}
+                onChange={handleChange}
+                value={formValue.password}
+                autoComplete="current-password"
               >
               </input>
             </fieldset>
