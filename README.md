@@ -23,5 +23,5 @@
 
 Все запросы на авторизацию, регистрацию и проверку токена должны работают через сервис `https://auth.nomoreparties.co`.
 
-* [Ссылка на проект](https://sergeyklopov94.github.io/mesto-react/)
+* [Ссылка на проект](https://sergeyklopov94.github.io/react-mesto-auth/)
 
