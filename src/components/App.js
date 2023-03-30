@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route, useNavigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { CurrentUserContext, currentData } from '../contexts/CurrentUserContext';
 import Header from './Header';
 import Main from './Main';
@@ -19,7 +19,7 @@ import successIcon from '../images/success-icon.svg';
 
 
 function App() {
-
+  
   const [isEditProfilePopupOpen, setIsEditProfilePopupOpen] = React.useState(false);
   const [isAddPlacePopupOpen, setIsAddPlacePopupOpen] = React.useState(false);
   const [isEditAvatarPopupOpen, setIsEditAvatarPopupOpen] = React.useState(false);
@@ -187,6 +187,8 @@ function App() {
         .catch((err) => {
           console.log(err);
         });
+    } else {
+        setEmail('');
     }
   }, [navigate]);
 
@@ -225,7 +227,7 @@ function App() {
               onCardLike={handleCardLike}
             />
           }/>
-          <Route path="*" element={<Login />} />
+          <Route path="/*" element={<Navigate to="/" replace/>} />
         </Routes>
         {loggedIn && <Footer />}
         <EditProfilePopup
