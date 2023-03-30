@@ -47,51 +47,6 @@ function App() {
     setSelectedCard({});
   }
 
-  const handleLogin = (email, password, setFormValue) => {
-    let infoTooltipText = '';
-    let infoTooltipImage = null;
-    auth.authorize(email, password)
-      .then((res) => {
-        if (res.token) {
-          setFormValue({email: '', password: ''});
-          setLoggedIn(true);
-          navigate('/', {replace: true});
-          infoTooltipText = 'Вы успешно вошли!';
-          infoTooltipImage = successIcon;
-        }
-      })
-      .catch((err) => {
-        console.log(err);
-        infoTooltipText = 'Что-то пошло не так! Попробуйте еще раз.';
-        infoTooltipImage = errorIcon;
-      })
-      .finally(() => {
-        setInfoTooltipData({image: infoTooltipImage, text: infoTooltipText});
-        setIsInfoTooltipOpen(true);
-      });
-  }
-
-  const handleRegister = (formValue) => {
-    let infoTooltipText = '';
-    let infoTooltipImage = null;
-    const { password, email } = formValue;
-    auth.register(password, email)
-      .then((res) => {
-        navigate('/sign-in', {replace: true});
-        infoTooltipText = 'Вы успешно зарегистрировались!';
-        infoTooltipImage = successIcon;
-      })
-      .catch((err) => {
-        console.log(err);
-        infoTooltipText = 'Что-то пошло не так! Попробуйте еще раз.';
-        infoTooltipImage = errorIcon;
-      })
-      .finally(() => {
-        setInfoTooltipData({image: infoTooltipImage, text: infoTooltipText});
-        setIsInfoTooltipOpen(true);
-      });
-  }
-
   function handleEditProfileClick() {
     setIsEditProfilePopupOpen(true);
   }
@@ -172,6 +127,52 @@ function App() {
       });
   }
 
+  function handleLogin(email, password, setFormValue) {
+    let infoTooltipText = '';
+    let infoTooltipImage = null;
+    auth.authorize(email, password)
+      .then((res) => {
+        if (res.token) {
+          localStorage.setItem('token', res.token);
+          setFormValue({email: '', password: ''});
+          setLoggedIn(true);
+          navigate('/', {replace: true});
+          infoTooltipText = 'Вы успешно вошли!';
+          infoTooltipImage = successIcon;
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+        infoTooltipText = 'Что-то пошло не так! Попробуйте еще раз.';
+        infoTooltipImage = errorIcon;
+      })
+      .finally(() => {
+        setInfoTooltipData({image: infoTooltipImage, text: infoTooltipText});
+        setIsInfoTooltipOpen(true);
+      });
+  }
+
+  function handleRegister(formValue) {
+    let infoTooltipText = '';
+    let infoTooltipImage = null;
+    const { password, email } = formValue;
+    auth.register(password, email)
+      .then((res) => {
+        navigate('/sign-in', {replace: true});
+        infoTooltipText = 'Вы успешно зарегистрировались!';
+        infoTooltipImage = successIcon;
+      })
+      .catch((err) => {
+        console.log(err);
+        infoTooltipText = 'Что-то пошло не так! Попробуйте еще раз.';
+        infoTooltipImage = errorIcon;
+      })
+      .finally(() => {
+        setInfoTooltipData({image: infoTooltipImage, text: infoTooltipText});
+        setIsInfoTooltipOpen(true);
+      });
+  }
+
   React.useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
@@ -190,6 +191,7 @@ function App() {
   }, [navigate]);
 
   React.useEffect(() => {
+    if(loggedIn) {
       Promise.all([api.getUserData(), api.getInitialCards()])
         .then(([userData, cardData]) => {
           setCurrentUser(userData);
@@ -198,7 +200,8 @@ function App() {
         .catch((err) => {
           console.log(err);
         });
-  }, []);
+    }
+  }, [loggedIn]);
 
   return (
     <CurrentUserContext.Provider value={currentUser}>
